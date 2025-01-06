@@ -13,11 +13,13 @@ func handlerReadiness(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(http.StatusText(http.StatusOK)))
 }
 
-func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
+func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
+	const maxChirpLength int = 140
+
 	type parameters struct {
 		Body string `json:"body"`
 	}
-	type validResp struct {
+	type returnVals struct {
 		Valid bool   `json:"valid"`
 		Chirp string `json:"cleaned_body"`
 	}
@@ -25,16 +27,16 @@ func handlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "couldnt decode params")
+		respondWithError(w, http.StatusInternalServerError, "Couldnt decode parameters", err)
 		return
 	}
-	if len(params.Body) > 140 {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
+	if len(params.Body) > maxChirpLength {
+		respondWithError(w, http.StatusBadRequest, "Chirp is too long", nil)
 		return
 	}
 	cleaned := cleanChirp(params.Body)
 
-	respondWithJson(w, 200, validResp{
+	respondWithJson(w, 200, returnVals{
 		Valid: true,
 		Chirp: cleaned,
 	})

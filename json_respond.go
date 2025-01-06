@@ -6,7 +6,10 @@ import (
 	"net/http"
 )
 
-func respondWithError(w http.ResponseWriter, code int, msg string) {
+func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
+	if err != nil {
+		log.Println(err)
+	}
 	if code > 499 {
 		log.Printf("responding with 5xx error: %s", msg)
 	}
@@ -28,5 +31,5 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	}
 	w.WriteHeader(code)
 	w.Write(dat)
-	log.Printf("serving http cake with code: %v\n", code)
+	log.Printf("serving http crab cake with code: %v\n", code)
 }
