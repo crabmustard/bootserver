@@ -12,3 +12,8 @@ RETURNING *;
 
 -- name: GetAllChirps :many
 SELECT * FROM chirps;
+
+
+-- name: GetChirpById :one
+SELECT * FROM chirps
+WHERE id = $1;
