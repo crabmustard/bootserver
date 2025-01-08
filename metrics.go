@@ -24,10 +24,3 @@ func (cfg *apiConfig) handlerGetMetrics(w http.ResponseWriter, r *http.Request) 
   </body>
 </html>`, cfg.fileServerHits.Load())))
 }
-
-// func (cfg *apiConfig) handlerResetMetrics(w http.ResponseWriter, r *http.Request) {
-// 	cfg.fileServerHits.Store(0)
-// 	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-// 	w.WriteHeader(http.StatusOK)
-// 	w.Write([]byte("Reset metrics successful.\n"))
-// }
