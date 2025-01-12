@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -14,7 +16,7 @@ const (
 	TokenTypeBase   TokenType = "chirpy"
 )
 
-func MakeNewJWT(userid uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userid uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
 	signingString := []byte(tokenSecret)
 	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    string(TokenTypeBase),
@@ -26,22 +28,27 @@ func MakeNewJWT(userid uuid.UUID, tokenSecret string, expiresIn time.Duration) (
 }
 
 func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
-	claimStruct := &jwt.RegisteredClaims{}
-	theToken, err := jwt.ParseWithClaims(tokenString, claimStruct,
-		func(token *jwt.Token) (interface{}, error) {
-			return []byte(tokenSecret), nil
-		},
+	claimStruct := jwt.RegisteredClaims{}
+	theToken, err := jwt.ParseWithClaims(tokenString, &claimStruct,
+		func(token *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
 	)
 	if err != nil {
-		return uuid.UUID{}, err
+		return uuid.Nil, err
 	}
-	// tokenIssuer, err := theToken.Claims.GetIssuer()
-	// if err != nil {
-	// 	return uuid.UUID{}, err
-	// }
-	userID, err := uuid.Parse(claimStruct.Subject)
+	userIDstring, err := theToken.Claims.GetSubject()
 	if err != nil {
-		return uuid.UUID{}, err
+		return uuid.Nil, err
 	}
-
+	issuer, err := theToken.Claims.GetIssuer()
+	if err != nil {
+		return uuid.Nil, err
+	}
+	if issuer != string(TokenTypeBase) {
+		return uuid.Nil, errors.New("invalid issuer")
+	}
+	id, err := uuid.Parse(userIDstring)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+	return id, nil
 }
