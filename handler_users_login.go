@@ -3,14 +3,16 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/crabmustard/bootserver/internal/auth"
 )
 
 func (cfg *apiConfig) handlerUsersLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		Email     string `json:"email"`
+		Password  string `json:"password"`
+		ExpiresIn int    `json:"expires_in_seconds"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -30,12 +32,18 @@ func (cfg *apiConfig) handlerUsersLogin(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusUnauthorized, "incorrect email or password", err)
 		return
 	}
+	expiry := time.Duration(time.Hour * 1)
+	if params.ExpiresIn < 1 {
+		expiry = time.Duration(time.Seconds * expiry)
+	}
+	token, err := auth.MakeJWT(dbUser.ID, apiConfig.jwtSecret)
 
 	respondWithJson(w, http.StatusOK, User{
 		ID:        dbUser.ID,
 		CreatedAt: dbUser.CreatedAt,
 		UpdatedAt: dbUser.UpdatedAt,
 		Email:     dbUser.Email,
+		Token:     token,
 	})
 
 }

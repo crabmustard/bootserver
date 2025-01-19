@@ -3,10 +3,12 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type TokenType string
@@ -15,6 +17,18 @@ const (
 	TokenTypeAccess TokenType = "chirpy-access"
 	TokenTypeBase   TokenType = "chirpy"
 )
+
+func HashPassword(password string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashed), nil
+}
+
+func CheckPasswordHash(password, hash string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+}
 
 func MakeJWT(userid uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
 	signingString := []byte(tokenSecret)
@@ -51,4 +65,12 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 	return id, nil
+}
+
+func GetBearerToken(headers http.Header) (string, error) {
+	bearerToken := headers.Get("Authorization")
+	if bearerToken == "" {
+		return "", fmt.Errorf("no authorization header")
+	}
+	return bearerToken, nil
 }
