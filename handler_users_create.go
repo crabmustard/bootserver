@@ -18,6 +18,7 @@ type User struct {
 	HashedPassword string    `json:"-"`
 	Token          string    `json:"token"`
 	RefreshToken   string    `json:"refresh_token"`
+	ChirpyRed      bool      `json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +57,7 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 			CreatedAt: dbUser.CreatedAt,
 			UpdatedAt: dbUser.UpdatedAt,
 			Email:     dbUser.Email,
+			ChirpyRed: dbUser.ChirpyRed,
 		},
 	})
 

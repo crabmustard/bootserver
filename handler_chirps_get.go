@@ -7,27 +7,54 @@ import (
 )
 
 func (cfg *apiConfig) handlerChirpsGetAll(w http.ResponseWriter, r *http.Request) {
-
-	allChirps, err := cfg.db.GetAllChirps(r.Context())
+	author := r.URL.Query().Get("author_id")
+	authorID, err := uuid.Parse(author)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "error making user", err)
+		respondWithError(w, http.StatusBadRequest, "unable to parse authorid", err)
 		return
 	}
 
-	jsonChirps := []Chirp{}
-	for _, chirp := range allChirps {
-		nextChirp := Chirp{
-			ID:        chirp.ID,
-			CreatedAt: chirp.CreatedAt,
-			UpdatedAt: chirp.UpdatedAt,
-			UserID:    chirp.UserID,
-			Body:      chirp.Body,
+	if author == "" {
+		allChirps, err := cfg.db.GetAllChirps(r.Context())
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "error making user", err)
+			return
 		}
-		jsonChirps = append(jsonChirps, nextChirp)
+
+		jsonChirps := []Chirp{}
+		for _, chirp := range allChirps {
+			nextChirp := Chirp{
+				ID:        chirp.ID,
+				CreatedAt: chirp.CreatedAt,
+				UpdatedAt: chirp.UpdatedAt,
+				UserID:    chirp.UserID,
+				Body:      chirp.Body,
+			}
+			jsonChirps = append(jsonChirps, nextChirp)
+		}
+
+		respondWithJson(w, http.StatusOK, jsonChirps)
+	} else {
+		allChirps, err := cfg.db.GetAllChirpsByAuthor(r.Context(), authorID)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "error making user", err)
+			return
+		}
+
+		jsonChirps := []Chirp{}
+		for _, chirp := range allChirps {
+			nextChirp := Chirp{
+				ID:        chirp.ID,
+				CreatedAt: chirp.CreatedAt,
+				UpdatedAt: chirp.UpdatedAt,
+				UserID:    chirp.UserID,
+				Body:      chirp.Body,
+			}
+			jsonChirps = append(jsonChirps, nextChirp)
+		}
+
+		respondWithJson(w, http.StatusOK, jsonChirps)
 	}
-
-	respondWithJson(w, http.StatusOK, jsonChirps)
-
 }
 
 func (cfg *apiConfig) handlerChirpsGetID(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +65,7 @@ func (cfg *apiConfig) handlerChirpsGetID(w http.ResponseWriter, r *http.Request)
 	}
 	theChirp, err := cfg.db.GetChirpById(r.Context(), chirpID)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "error retreiving chirp", err)
+		respondWithError(w, http.StatusNotFound, "error retreiving chirp", err)
 		return
 	}
 

@@ -72,8 +72,8 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func GetBearerToken(headers http.Header) (string, error) {
-	authHeader := headers.Get("Authorization")
+func GetBearerToken(h http.Header) (string, error) {
+	authHeader := h.Get("Authorization")
 	if authHeader == "" {
 		return "", fmt.Errorf("no authorization header included in request")
 	}
@@ -91,4 +91,16 @@ func MakeRefreshToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(tokenBytes), nil
+}
+
+func GetAPIKey(h http.Header) (string, error) {
+	authHeader := h.Get("Authorization")
+	if authHeader == "" {
+		return "", fmt.Errorf("no authorization header included in request")
+	}
+	splitToken := strings.Split(authHeader, " ")
+	if len(splitToken) < 2 || splitToken[0] != "ApiKey" {
+		return "", errors.New("auth header has bad shape")
+	}
+	return splitToken[1], nil
 }
